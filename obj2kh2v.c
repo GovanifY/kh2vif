@@ -30,7 +30,7 @@ for(int i =0; i<vi+1;i++){dsm << ".short 0xffff, 0xffff\n";}
 
 		dsm << ".EndUnpack\n\nstmask 0xf3f3f3f3; Sets mask register(3303, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack 4, 128, S_8, 0, *; Vertex indices\n";
 for(int i =0; i<vi+1;i++){dsm << ".byte " << i << "\n";}
-dsm << ".EndUnpack\n\nstmask 0xf3f3f3f3; Sets mask register(3303, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack 4, 128, S_32, 0, *; Flags\n";
+dsm << ".EndUnpack\n\nstmask 0xf3f3f3f3; Sets mask register(3303, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack 4, 128, S_8, 0, *; Flags\n";
 in.clear();
 in.seekg(0, std::ios::beg);
 int iff =1;
@@ -51,8 +51,8 @@ line_process:
 			iu = std::stoi(u.substr(0, u.find("/"))); 			
 			printf("i1: %d i2: %d i3: %d\n", ii, in, iu);		
 			printf("flag: %d\n", flag(ii, in, iu));
-			if(iff< flag(ii,in,iu)){dsm << ".int 0x10; stock\n"; stock=1;}
-			if(iff == flag(ii,in,iu)){ if(stock==1){stock=0; dsm << ".int 0x20; draw triangle\n"; rev=0;} else{if(rev==1){dsm << ".int 0x20; draw triangle\n"; rev=0;} else{dsm << ".int 0x30; draw reversed triangle\n"; rev=1;}}}
+			if(iff< flag(ii,in,iu)){dsm << ".byte 0x10; stock\n"; stock=1;}
+			if(iff == flag(ii,in,iu)){ if(stock==1){stock=0; dsm << ".byte 0x20; draw triangle\n"; rev=0;} else{if(rev==1){dsm << ".byte 0x20; draw triangle\n"; rev=0;} else{dsm << ".byte 0x30; draw reversed triangle\n"; rev=1;}}}
 			if(iff > flag(ii,in,iu)){printf("Unordonned Model! Will abort\n"); return -1;}
 			iff++;
 			printf("iff: %d\n", iff);
