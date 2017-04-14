@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <math.h>
 
 int flag(int x, int y, int z) {
 	int flagx = x;
@@ -26,7 +27,20 @@ int main(int argc, char* argv[]){
 			vi++;
         }
 }
-for(int i =0; i<vi+1;i++){dsm << ".short 0xffff, 0xffff\n";}
+in.clear();
+in.seekg(0, std::ios::beg);
+    while (getline(in, line))
+    {
+        if (line.substr(0,3) == "vt ")
+        {
+			std::istringstream s(line.substr(3));
+			float u, v;
+            s >> u; s >> v;
+			dsm << ".short " << int(round(u*4095)) << ", " << int(round(v*4095)) << "\n";        
+		}
+
+	}
+
 
 		dsm << ".EndUnpack\n\nstmask 0xf3f3f3f3; Sets mask register(3303, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack 4, 128, S_8, 0, *; Vertex indices\n";
 for(int i =0; i<vi+1;i++){dsm << ".byte " << i << "\n";}
