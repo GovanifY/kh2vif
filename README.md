@@ -1,8 +1,7 @@
 # obj2kh2v
 Model importer for Kingdom Hearts 2
 
-It's as dirty as it can get and doesn't even include VU1 assembler
-for now but eh, it kinda works.
+It's as dirty as it can get but eh, it kinda works.
 
 Oh btw when I mean it kinda works datas are roughly placed, I just made the
 tool in a day. It is still missing memory checks and additional shading 
