@@ -87,7 +87,7 @@ line_process:
 
         }
 }
-dsm << ".EndUnpack\n\nstcol 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000; We set garbage data to 1(float) so even if nothing is referenced game doesn't go crazy\nstmask 0x02020202; Sets mask register(0002, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] V3_32,";
+dsm << ".EndUnpack\n\nstcol 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000; We set garbage data to 1(float) so even if nothing is referenced game doesn't go crazy\nstmask 0x80808080; Sets mask register(0002, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] V3_32,";
 vp = dsm.tellp();
 dsm << "               , *; Vertex definition\n";
 
