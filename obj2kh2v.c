@@ -25,7 +25,7 @@ int main(int argc, char* argv[]){
 	hp = dsm.tellp();
 	//Can't insert if not at eof using ofstream so I put 10 spaces to fill up, size of INT_MAX and no \n to avoid linefeed not beeing rewritten
 	//It's so hacky but I'm fed up with this shit already
-	dsm << ".int " << "          ,           ,           ,                                                                                                                                                                                                                                                                                                           ";
+	dsm << "     " << "          ,           ,           ,                                                                                                                                                                                                                                                                                                           ";
 dsm << "\n.EndUnpack\n\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] V2_16, 4, *; UV definition\n";
 	int vi =0;
 	int ti =0;
@@ -55,9 +55,9 @@ in.seekg(0, std::ios::beg);
 	}
 
 
-		dsm << ".EndUnpack\n\nstmask 0xf3f3f3f3; Sets mask register(3303, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] S_8, 4, *; Vertex indices\n";
+		dsm << ".EndUnpack\n\nstmask 0xcfcfcfcf; Sets mask register(3303, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] S_8, 4, *; Vertex indices\n";
 for(int i =0; i<vi+1;i++){dsm << ".byte " << i << "\n";}
-dsm << ".EndUnpack\n\nstmask 0xf3f3f3f3; Sets mask register(3303, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] S_8, 4, *; Flags\n";
+dsm << ".EndUnpack\n\nstmask 0x3f3f3f3f; Sets mask register(3330, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] S_8, 4, *; Flags\n";
 in.clear();
 in.seekg(0, std::ios::beg);
 int iff =1;
@@ -107,7 +107,7 @@ in.seekg(0, std::ios::beg);
 }
 
 
-dsm << ".EndUnpack\n\nunpack[r] V4_32,";
+dsm << ".EndUnpack\n\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] V4_32,";
 ap = dsm.tellp();
 dsm << "          , *; Vertex affiliation header\n.int " << vi+1 << ", 0, 0, 0\n.EndUnpack\nvifnop\nvifnop; We wait for data to be kicked in\n";
 
@@ -116,17 +116,35 @@ printf("h1: %i, h2: 4, h3: %i, h4: %i\nj1: %i, j2: %i, j3: 0, j4: 1\n",ti, 4+ti+
 		//TODO: Stop hardcode Header size(5type-line exist) and Vert/Array
 		//h3: 1 not because 1 value but 1 array of 4, padding needs to be
 		//checked!
+#if (_WIN32)
+		dsm.seekp(hp+10);
+#else
 		dsm.seekp(hp);
+#endif
 		dsm << ".int " << ti << ", 4, " << 4+ti+vi << ", " << 4+ti+vi+1 << "; Number of u+v+flag+index, their offset, offset of vertex affiliation header, offset of mat definition(end)\n";
 		dsm << ".int 0, 0, 0, 0; Nobody care about vertices merging and colors\n";
         dsm << ".int " << vi << ", " << 4+ti << ", 0, 1; Number of vertex, their offset, reserved and number of array attribution\n";
+#if (_WIN32)
+		dsm.seekp(vp+10);
+#else
 		dsm.seekp(vp);
+#endif
 		dsm << 4+ti;
+#if (_WIN32)
+		dsm.seekp(ap+10);
+#else
 		dsm.seekp(ap);
+#endif
 		dsm << 4+ti+vi;
 		dsm.close();
+#if (_WIN32)
+	if(system(("dvp-as \""+dsmname+"\" -o junk.o").c_str()) != 0){printf("Could not proceed, please install homebrew ps2 sdk!\n"); return -1;}
+		if(system(("dvp-objcopy -O binary junk.o \""+kh2vname+"\"").c_str()) != 0){printf("Your homebrew ps2 sdk installation seems to be broken, please reinstall\n"); return -1;}
+#else
 	if(system(("dvp-as "+dsmname+" -o junk.o > /dev/null").c_str()) != 0){printf("Could not proceed, please install homebrew ps2 sdk!\n"); return -1;}
 		if(system(("dvp-objcopy -O binary junk.o "+kh2vname+" > /dev/null").c_str()) != 0){printf("Your homebrew ps2 sdk installation seems to be broken, please reinstall\n"); return -1;}
+
+#endif
 		remove("junk.o");
 		if(!junk){remove(dsmname.c_str());}
 		return 1;
