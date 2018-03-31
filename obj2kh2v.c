@@ -218,5 +218,10 @@ printf("h1: %i, h2: 4, h3: %i, h4: %i\nj1: %i, j2: %i, j3: 0, j4: 1\n",ti, 4+ti+
 #endif
 		remove("junk.o");
 		if(!junk){remove(dsmname.c_str());}
+
+        FILE * vifpkt = fopen(kh2vname.c_str(), "a");
+        char empty[] = {0x00};
+        while(ftell(vifpkt)%16!=0){fwrite(empty , 1 , sizeof(empty) , vifpkt);}
+        fclose(vifpkt);
 		return 1;
 }
