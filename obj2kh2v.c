@@ -14,7 +14,7 @@ int flag(int x, int y, int z) {
 }
 int main(int argc, char* argv[]){
 	long ap, vp, hp;
-	int junk=0;
+	int junk=1;
 	printf("obj2kh2v\nPlease input only unwelded sorted models containing only triangles!\n\n");
 	if(argc<2){printf("Usage: obj2kh2v model.obj"); return -1;}
 	std::ifstream in(argv[1], std::ios::in);
@@ -121,9 +121,9 @@ printf("h1: %i, h2: 4, h3: %i, h4: %i\nj1: %i, j2: %i, j3: 0, j4: 1\n",ti, 4+ti+
 #else
 		dsm.seekp(hp);
 #endif
-		dsm << ".int " << ti << ", 4, " << 4+ti+vi << ", " << 4+ti+vi+1 << "; Number of u+v+flag+index, their offset, offset of vertex affiliation header, offset of mat definition(end)\n";
+		dsm << ".int " << ti << ", 4, " << 4+ti+vi+1 << ", " << 4+ti+vi+1 << "; Number of u+v+flag+index, their offset, offset of vertex affiliation header, offset of mat definition(end)\n";
 		dsm << ".int 0, 0, 0, 0; Nobody care about vertices merging and colors\n";
-        dsm << ".int " << vi << ", " << 4+ti << ", 0, 1; Number of vertex, their offset, reserved and number of array attribution\n";
+        dsm << ".int " << vi+1 << ", " << 4+ti << ", 0, 1; Number of vertex, their offset, reserved and number of array attribution\n";
 #if (_WIN32)
 		dsm.seekp(vp+10);
 #else
