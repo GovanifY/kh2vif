@@ -6,18 +6,43 @@
 #include <math.h>
 #include <limits>
 
-int flag(int x, int y, int z) {
+int max(int x, int y, int z) {
 	int flagx = x;
 	if (y > flagx) {flagx = y;}
 	if (z > flagx) {flagx = z;} 
 	return flagx;
 }
+
+void get_uv(std::ifstream in, std::ofstream dsm, int uv){
+    in.clear();
+    in.seekg(0, std::ios::beg);
+    int cnt=0;
+	std::string line;
+    while (getline(in, line))
+    {
+        if (line.substr(0,3) == "vt ")
+        {
+            cnt++;
+            if(cnt==uv){
+			    std::istringstream s(line.substr(3));
+                float u, v;
+                s >> u; s >> v;
+                // todo: get to uv off and write
+			    dsm << ".short " << int(round(u*4095)) << ", " << int(round(v*4095)) << "\n";        
+            }
+		}
+
+	}
+
+
+}
+
 int main(int argc, char* argv[]){
 	long ap, vp, hp;
 	int junk=1;
-	printf("obj2kh2v\nPlease input only unwelded sorted models containing only triangles!\n\n");
+	printf("obj2kh2v\n-- If you don't know what a VIF packet be prepared to be driven to insanity\n\n");
 	if(argc<2){printf("Usage: obj2kh2v model.obj"); return -1;}
-	std::ifstream in(argv[1], std::ios::in);
+	std::ifstream input(argv[1], std::ios::in);
 	std::string dsmname = std::string(argv[1]).substr(0,std::string(argv[1]).find_last_of('.'))+".dsm";
 	std::string kh2vname = std::string(argv[1]).substr(0,std::string(argv[1]).find_last_of('.'))+".kh2v";
 	std::ofstream dsm (dsmname);
@@ -29,72 +54,118 @@ int main(int argc, char* argv[]){
 dsm << "\n.EndUnpack\n\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] V2_16, 4, *; UV definition\n";
 	int vi =0;
 	int ti =0;
+    int face_count=0;
+    int vert_count=0;
+    // max uv buffer, should be enough for an entire set of obj vertices
+    int uvs[8192];
 
 	if (dsm.is_open()){
 	std::string line;
-    while (getline(in, line))
+    while (getline(input, line))
     {
         if (line.substr(0,2) == "v ")
         {
 			vi++;
         }
-}
-in.clear();
-in.seekg(0, std::ios::beg);
-    while (getline(in, line))
+    }
+    input.clear();
+    input.seekg(0, std::ios::beg);
+    while (getline(input, line))
+    {
+        if (line.substr(0,2) == "f ")
+        {
+			face_count++;
+        }
+    }
+    input.clear();
+    input.seekg(0, std::ios::beg);
+
+    int y=0;
+    while (getline(input, line))
     {
         if (line.substr(0,3) == "vt ")
         {
 			std::istringstream s(line.substr(3));
 			float u, v;
             s >> u; s >> v;
-			dsm << ".short " << int(round(u*4095)) << ", " << int(round(v*4095)) << "\n";        
-			ti++;
+			printf("tx= %f, ty= %f, txr= %d, tyr=%d\n", u, v, int(round(u*4095)), int(round(v*4095)));		
+            uvs[y]=int(round(u*4095));
+            uvs[y+1]=int(round(v*4095));
+            y+=2;
 		}
 
 	}
+    input.clear();
+    input.seekg(0, std::ios::beg);
+
+    long uv_pos = dsm.tellp();
+    // get uv pos here
+    for(int i=0; i<face_count;i++){
+        // temporary uvs to rewrite below
+         dsm << "                              ";        
+         dsm << "                              ";        
+         dsm << "                              ";        
+    }
+    
+    input.clear();
+    input.seekg(0, std::ios::beg);
 
 
-		dsm << ".EndUnpack\n\nstmask 0xcfcfcfcf; Sets mask register(3303, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] S_8, 4, *; Vertex indices\n";
-for(int i =0; i<vi;i++){dsm << ".byte " << i << "\n";}
-dsm << ".EndUnpack\n\nstmask 0x3f3f3f3f; Sets mask register(3330, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] S_8, 4, *; Flags\n";
-in.clear();
-in.seekg(0, std::ios::beg);
-int iff =1;
-int rev=0;
-int stock=0;
-while (getline(in, line))
+		dsm << "\n.EndUnpack\n\nstmask 0xcfcfcfcf; Sets mask register(3303, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] S_8, 4, *; Vertex indices\n";
+    while (getline(input, line))
     {
-		//printf("uwot");
         if (line.substr(0,2) == "f ")
         {
-line_process:
-			std::istringstream s(line.substr(2));
+            long cur_pos=0;
+	        std::istringstream s(line.substr(2));
 			std::string i, n, u;
-			int ii, in, iu;
+			int ii, inn, iu;
             s >> i; s >> n; s >> u;
 			ii = std::stoi(i.substr(0, i.find("/"))); 			
-			in = std::stoi(n.substr(0, n.find("/"))); 			
+			inn = std::stoi(n.substr(0, n.find("/"))); 			
 			iu = std::stoi(u.substr(0, u.find("/"))); 			
-			printf("i1: %d i2: %d i3: %d\n", ii, in, iu);		
-			printf("flag: %d\n", flag(ii, in, iu));
-			if(iff< flag(ii,in,iu)){dsm << ".byte 0x10; stock\n"; stock=1;}
-			if(iff == flag(ii,in,iu)){ if(stock==1){stock=0; dsm << ".byte 0x20; draw triangle\n"; rev=0;} else{if(rev==1){dsm << ".byte 0x20; draw triangle\n"; rev=0;} else{dsm << ".byte 0x30; draw reversed triangle\n"; rev=1;}}}
-			if(iff > flag(ii,in,iu)){printf("Unordonned Model! Will abort\n"); return -1;}
-			iff++;
-			printf("iff: %d\n", iff);
-			if(stock==1){goto line_process;}
+			printf("i1: %d i2: %d i3: %d\n", ii, inn, iu);		
+            dsm << ".byte " << ii-1 << "\n";
+            cur_pos=dsm.tellp();
+            dsm.seekp(uv_pos);
+            dsm << ".short " << uvs[(ii-1)*2] << ", " << uvs[((ii-1)*2)+1] << "\n";
+            uv_pos=dsm.tellp();
+            dsm.seekp(cur_pos);
 
+            dsm << ".byte " << inn-1 << "\n";
+            cur_pos=dsm.tellp();
+            dsm.seekp(uv_pos);
+            dsm << ".short " << uvs[(inn-1)*2] << ", " << uvs[((inn-1)*2)+1] << "\n";
+            uv_pos=dsm.tellp();
+            dsm.seekp(cur_pos);
+
+            dsm << ".byte " << iu-1 << "\n";
+            cur_pos=dsm.tellp();
+            dsm.seekp(uv_pos);
+            dsm << ".short " << uvs[(iu-1)*2] << ", " << uvs[((iu-1)*2)+1] << "\n";
+            uv_pos=dsm.tellp();
+            dsm.seekp(cur_pos);
+			printf("bis i1: %d i2: %d i3: %d\n", (ii-1)*2, (inn-1)*2, (iu-1)*2);		
+
+            vert_count+=3;
         }
-}
+    }
+
+dsm << ".EndUnpack\n\nstmask 0x3f3f3f3f; Sets mask register(3330, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] S_8, 4, *; Flags\n";
+        for(int i=0; i<face_count; i++){
+            long pos = dsm.tellp();
+			dsm << ".byte 0x10; stock\n"; 
+			dsm << ".byte 0x10; stock\n"; 
+            dsm << ".byte 0x20; draw triangle\n";
+        }
 dsm << ".EndUnpack\n\nstcol 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000; We set garbage data to 1(float) so even if nothing is referenced game doesn't go crazy\nstmask 0x80808080; Sets mask register(0002, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] V3_32,";
 vp = dsm.tellp();
 dsm << "               , *; Vertex definition\n";
 
-in.clear();
-in.seekg(0, std::ios::beg);
+input.clear();
+input.seekg(0, std::ios::beg);
 
-  while (getline(in, line))
+  while (getline(input, line))
     {
         if (line.substr(0,2) == "v ")
         {
@@ -121,21 +192,21 @@ printf("h1: %i, h2: 4, h3: %i, h4: %i\nj1: %i, j2: %i, j3: 0, j4: 1\n",ti, 4+ti+
 #else
 		dsm.seekp(hp);
 #endif
-		dsm << ".int " << ti << ", 4, " << 4+ti+vi << ", " << 4+ti+vi+1 << "; Number of u+v+flag+index, their offset, offset of vertex affiliation header, offset of mat definition(end)\n";
+		dsm << ".int " << face_count*3 << ", 4, " << 4+(face_count*3)+vi << ", " << 4+(face_count*3)+vi+1 << "; Number of u+v+flag+index, their offset, offset of vertex affiliation header, offset of mat definition(end)\n";
 		dsm << ".int 0, 0, 0, 0; Nobody care about vertices merging and colors\n";
-        dsm << ".int " << vi << ", " << 4+ti << ", 0, 1; Number of vertices, their offset, reserved and number of array attribution\n";
+        dsm << ".int " << vi << ", " << 4+(face_count*3) << ", 0, 1; Number of vertices, their offset, reserved and number of array attribution\n";
 #if (_WIN32)
 		dsm.seekp(vp+10);
 #else
 		dsm.seekp(vp);
 #endif
-		dsm << 4+ti;
+		dsm << 4+(face_count*3);
 #if (_WIN32)
 		dsm.seekp(ap+10);
 #else
 		dsm.seekp(ap);
 #endif
-		dsm << 4+ti+vi;
+		dsm << 4+(face_count*3)+vi;
 		dsm.close();
 #if (_WIN32)
 	if(system(("dvp-as \""+dsmname+"\" -o junk.o").c_str()) != 0){printf("Could not proceed, please install homebrew ps2 sdk!\n"); return -1;}
