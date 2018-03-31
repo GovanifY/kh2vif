@@ -6,6 +6,7 @@
 #include <math.h>
 #include <limits>
 
+
 int max(int x, int y, int z) {
 	int flagx = x;
 	if (y > flagx) {flagx = y;}
@@ -125,26 +126,64 @@ dsm << "\n.EndUnpack\n\nstcycl 01, 01; We write code to memory without skips/ove
 			inn = std::stoi(n.substr(0, n.find("/"))); 			
 			iu = std::stoi(u.substr(0, u.find("/"))); 			
 			printf("i1: %d i2: %d i3: %d\n", ii, inn, iu);		
+            dsm << std::flush;
             dsm << ".byte " << ii-1 << "\n";
             cur_pos=dsm.tellp();
+#if (_WIN32)
+            dsm.seekp(uv_pos+10);
+#else
             dsm.seekp(uv_pos);
-            dsm << ".short " << uvs[(ii-1)*2] << ", " << uvs[((ii-1)*2)+1] << "\n";
-            uv_pos=dsm.tellp();
-            dsm.seekp(cur_pos);
+#endif
 
-            dsm << ".byte " << inn-1 << "\n";
-            cur_pos=dsm.tellp();
-            dsm.seekp(uv_pos);
-            dsm << ".short " << uvs[(inn-1)*2] << ", " << uvs[((inn-1)*2)+1] << "\n";
+            dsm << std::flush;
+            dsm << ".short " << uvs[(ii-1)*2] << ", " << uvs[((ii-1)*2)+1] << std::endl;
             uv_pos=dsm.tellp();
+#if (_WIN32)
+            dsm.seekp(cur_pos+10);
+#else
             dsm.seekp(cur_pos);
+#endif
 
-            dsm << ".byte " << iu-1 << "\n";
+
+
+            dsm << std::flush;
+            dsm << ".byte " << inn-1 << std::endl;
             cur_pos=dsm.tellp();
+#if (_WIN32)
+            dsm.seekp(uv_pos+10);
+#else
             dsm.seekp(uv_pos);
-            dsm << ".short " << uvs[(iu-1)*2] << ", " << uvs[((iu-1)*2)+1] << "\n";
+#endif
+
+            dsm << std::flush;
+            dsm << ".short " << uvs[(inn-1)*2] << ", " << uvs[((inn-1)*2)+1] << std::endl;
             uv_pos=dsm.tellp();
+#if (_WIN32)
+            dsm.seekp(cur_pos+10);
+#else
             dsm.seekp(cur_pos);
+#endif
+
+
+            dsm << std::flush;
+            dsm << ".byte " << iu-1 << std::endl;
+            cur_pos=dsm.tellp();
+#if (_WIN32)
+            dsm.seekp(uv_pos+10);
+#else
+            dsm.seekp(uv_pos);
+#endif
+
+
+            dsm << std::flush;
+            dsm << ".short " << uvs[(iu-1)*2] << ", " << uvs[((iu-1)*2)+1] << std::endl;
+            uv_pos=dsm.tellp();
+#if (_WIN32)
+            dsm.seekp(cur_pos+10);
+#else
+            dsm.seekp(cur_pos);
+#endif
+
 			printf("bis i1: %d i2: %d i3: %d\n", (ii-1)*2, (inn-1)*2, (iu-1)*2);		
 
             vert_count+=3;
@@ -180,7 +219,7 @@ input.seekg(0, std::ios::beg);
 
 dsm << ".EndUnpack\n\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] V4_32,";
 ap = dsm.tellp();
-dsm << "          , *; Vertex affiliation header\n.int " << vi << ", 0, 0, 0\n.EndUnpack\nvifnop\nvifnop; We wait for data to be kicked in\n";
+dsm << "                                                           \n.int " << vi << ", 0, 0, 0\n.EndUnpack\nvifnop\nvifnop; We wait for data to be kicked in\n";
 
 }
 printf("h1: %i, h2: 4, h3: %i, h4: %i\nj1: %i, j2: %i, j3: 0, j4: 1\n",ti, 4+ti+vi, 4+ti+vi+1,vi, 4+ti);
@@ -188,25 +227,34 @@ printf("h1: %i, h2: 4, h3: %i, h4: %i\nj1: %i, j2: %i, j3: 0, j4: 1\n",ti, 4+ti+
 		//h3: 1 not because 1 value but 1 array of 4, padding needs to be
 		//checked!
 #if (_WIN32)
-		dsm.seekp(hp+10);
+        dsm << std::flush;
+		dsm.seekp(hp+20);
 #else
 		dsm.seekp(hp);
 #endif
+
+        dsm << std::flush;
 		dsm << ".int " << face_count*3 << ", 4, " << 4+(face_count*3)+vi << ", " << 4+(face_count*3)+vi+1 << "; Number of u+v+flag+index, their offset, offset of vertex affiliation header, offset of mat definition(end)\n";
 		dsm << ".int 0, 0, 0, 0; Nobody care about vertices merging and colors\n";
         dsm << ".int " << vi << ", " << 4+(face_count*3) << ", 0, 1; Number of vertices, their offset, reserved and number of array attribution\n";
 #if (_WIN32)
+
+        dsm << std::flush;
 		dsm.seekp(vp+10);
 #else
 		dsm.seekp(vp);
 #endif
+        dsm << std::flush;
 		dsm << 4+(face_count*3);
 #if (_WIN32)
-		dsm.seekp(ap+10);
+
+        dsm << std::flush;
+		dsm.seekp(ap+30);
 #else
 		dsm.seekp(ap);
 #endif
-		dsm << 4+(face_count*3)+vi;
+        dsm << std::flush;
+		dsm << 4+(face_count*3)+vi << ", *; Vertex affiliation header" << std::endl ;
 		dsm.close();
 #if (_WIN32)
 	if(system(("dvp-as \""+dsmname+"\" -o junk.o").c_str()) != 0){printf("Could not proceed, please install homebrew ps2 sdk!\n"); return -1;}
