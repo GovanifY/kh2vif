@@ -56,7 +56,7 @@ in.seekg(0, std::ios::beg);
 
 
 		dsm << ".EndUnpack\n\nstmask 0xcfcfcfcf; Sets mask register(3303, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] S_8, 4, *; Vertex indices\n";
-for(int i =0; i<vi+1;i++){dsm << ".byte " << i << "\n";}
+for(int i =0; i<vi;i++){dsm << ".byte " << i << "\n";}
 dsm << ".EndUnpack\n\nstmask 0x3f3f3f3f; Sets mask register(3330, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] S_8, 4, *; Flags\n";
 in.clear();
 in.seekg(0, std::ios::beg);
@@ -109,7 +109,7 @@ in.seekg(0, std::ios::beg);
 
 dsm << ".EndUnpack\n\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] V4_32,";
 ap = dsm.tellp();
-dsm << "          , *; Vertex affiliation header\n.int " << vi+1 << ", 0, 0, 0\n.EndUnpack\nvifnop\nvifnop; We wait for data to be kicked in\n";
+dsm << "          , *; Vertex affiliation header\n.int " << vi << ", 0, 0, 0\n.EndUnpack\nvifnop\nvifnop; We wait for data to be kicked in\n";
 
 }
 printf("h1: %i, h2: 4, h3: %i, h4: %i\nj1: %i, j2: %i, j3: 0, j4: 1\n",ti, 4+ti+vi, 4+ti+vi+1,vi, 4+ti);
@@ -121,9 +121,9 @@ printf("h1: %i, h2: 4, h3: %i, h4: %i\nj1: %i, j2: %i, j3: 0, j4: 1\n",ti, 4+ti+
 #else
 		dsm.seekp(hp);
 #endif
-		dsm << ".int " << ti << ", 4, " << 4+ti+vi+1 << ", " << 4+ti+vi+1 << "; Number of u+v+flag+index, their offset, offset of vertex affiliation header, offset of mat definition(end)\n";
+		dsm << ".int " << ti << ", 4, " << 4+ti+vi << ", " << 4+ti+vi+1 << "; Number of u+v+flag+index, their offset, offset of vertex affiliation header, offset of mat definition(end)\n";
 		dsm << ".int 0, 0, 0, 0; Nobody care about vertices merging and colors\n";
-        dsm << ".int " << vi+1 << ", " << 4+ti << ", 0, 1; Number of vertex, their offset, reserved and number of array attribution\n";
+        dsm << ".int " << vi << ", " << 4+ti << ", 0, 1; Number of vertices, their offset, reserved and number of array attribution\n";
 #if (_WIN32)
 		dsm.seekp(vp+10);
 #else
