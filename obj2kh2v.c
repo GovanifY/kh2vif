@@ -112,7 +112,7 @@ dsm << "\n.EndUnpack\n\nstcycl 01, 01; We write code to memory without skips/ove
     input.seekg(0, std::ios::beg);
 
 
-		dsm << "\n.EndUnpack\n\nstmask 0xcfcfcfcf; Sets mask register(3303, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] S_8, 4, *; Vertex indices\n";
+		dsm << "\n.EndUnpack\n\nstmask 0xcfcfcfcf; Sets mask register(3303, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[mr] S_8, 4, *; Vertex indices\n";
     while (getline(input, line))
     {
         if (line.substr(0,2) == "f ")
@@ -190,14 +190,14 @@ dsm << "\n.EndUnpack\n\nstcycl 01, 01; We write code to memory without skips/ove
         }
     }
 
-dsm << ".EndUnpack\n\nstmask 0x3f3f3f3f; Sets mask register(3330, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] S_8, 4, *; Flags\n";
+dsm << ".EndUnpack\n\nstmask 0x3f3f3f3f; Sets mask register(3330, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[mr] S_8, 4, *; Flags\n";
         for(int i=0; i<face_count; i++){
             long pos = dsm.tellp();
 			dsm << ".byte 0x10; stock\n"; 
 			dsm << ".byte 0x10; stock\n"; 
             dsm << ".byte 0x20; draw triangle\n";
         }
-dsm << ".EndUnpack\n\nstcol 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000; We set garbage data to 1(float) so even if nothing is referenced game doesn't go crazy\nstmask 0x80808080; Sets mask register(0002, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[r] V3_32,";
+dsm << ".EndUnpack\n\nstcol 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000; We set garbage data to 1(float) so even if nothing is referenced game doesn't go crazy\nstmask 0x80808080; Sets mask register(0002, check EEUSER_E)\nstcycl 01, 01; We write code to memory without skips/overwrite\n\nunpack[mr] V3_32,";
 vp = dsm.tellp();
 dsm << "               , *; Vertex definition\n";
 
