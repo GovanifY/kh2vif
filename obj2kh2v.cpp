@@ -36,6 +36,7 @@ int main(int argc, char* argv[]){
     std::string line;
 
     std::vector<std::string> dsm_mem;
+    std::vector<int> bones;
     dsm_mem.push_back(".align 0");
     line = ";";
     line+=argv[1];
@@ -93,6 +94,24 @@ int main(int argc, char* argv[]){
 		}
 
 	}
+    input.clear();
+    input.seekg(0, std::ios::beg);
+
+    while (getline(input, line))
+    {
+        if (line.substr(0,3) == "vb ")
+        {
+			std::istringstream s(line.substr(2));
+			int v;
+            s >> v;
+            bones.push_back(v);
+			printf("bone= %d\n", v);		
+		}
+
+	}
+    if(bones.size()==0){
+        bones.push_back(vertex_count);
+    }
     input.clear();
     input.seekg(0, std::ios::beg);
 
@@ -190,9 +209,20 @@ int main(int argc, char* argv[]){
     dsm_mem.push_back("stcycl 01, 01; We write code to memory without skips/overwrite");
     dsm_mem.push_back("");
     dsm_mem.push_back("unpack[r] V4_32, ,*; Vertex affiliation header");
+    printf("%lu", bones.size());
     vertex_affiliation = dsm_mem.size()-1;
-    line = ".int " + std::to_string(vertex_count) + ", 0, 0, 0";
-    dsm_mem.push_back(line);
+    for(int i=0; i<ceil(float(bones.size())/4); i++){
+        line = ".int " + std::to_string(bones[(i*4)]);
+        int z=1;
+        while((i*4)+z<bones.size() && z < 4){
+        line+= ", " + std::to_string(bones[(i*4)+z]);
+        z++;
+        }
+        for(z;z<4;z++){
+            line+=", 0";
+        }
+        dsm_mem.push_back(line);
+    }
     dsm_mem.push_back(".EndUnpack");
     dsm_mem.push_back("vifnop");
     dsm_mem.push_back("vifnop; We wait for data to be kicked in");
@@ -205,10 +235,10 @@ int main(int argc, char* argv[]){
 		//checked!
         
 
-        line=".int " + std::to_string(face_count*3) + ", 4, " + std::to_string(4+(face_count*3)+vertex_count) + ", " + std::to_string(4+(face_count*3)+vertex_count+1) + "; Number of u+v+flag+index, their offset, offset of vertex affiliation header, offset of mat definiti    on(end)";
+        line=".int " + std::to_string(face_count*3) + ", 4, " + std::to_string(4+(face_count*3)+vertex_count) + ", " + std::to_string(int(4+(face_count*3)+vertex_count+ceil(float(bones.size())/4))) + "; Number of u+v+flag+index, their offset, offset of vertex affiliation header, offset of mat definition(end)";
         dsm_mem[tmpheader]=line;
         dsm_mem[tmpheader+1]=".int 0, 0, 0, 0; Nobody care about vertices merging and colors";
-        line=".int " + std::to_string(vertex_count) + ", " + std::to_string(4+(face_count*3)) + ", 0, 1; Number of vertices, their offset, reserved and number of array attribution";
+        line=".int " + std::to_string(vertex_count) + ", " + std::to_string(4+(face_count*3)) + ", 0, " + std::to_string(bones.size()) + "; Number of vertices, their offset, reserved and number of array attribution";
         dsm_mem[tmpheader+2]=line;
         line="unpack[mr] V3_32, " + std::to_string(4+(face_count*3)) + ", *; Vertex definition";
         dsm_mem[vertices_arg]=line;
