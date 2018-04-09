@@ -19,7 +19,6 @@ int max(int x, int y, int z) {
 }
 
 int main(int argc, char *argv[]) {
-    long ap, vp, hp;
     // max uv buffer, should be enough for an entire set of obj vertices
     int uvs[8192];
     int uv_count = 0;
@@ -138,7 +137,6 @@ int main(int argc, char *argv[]) {
 
         while (getline(input, line)) {
             if (line.substr(0, 2) == "f ") {
-                long cur_pos = 0;
                 std::istringstream s(line.substr(2));
                 std::string i, n, u;
                 int ii, inn, iu;
@@ -208,11 +206,10 @@ int main(int argc, char *argv[]) {
         while (getline(input, line)) {
             if (line.substr(0, 2) == "v ") {
                 std::istringstream s(line.substr(2));
-                float x, y, z, w;
+                float x, y, z;
                 s >> x;
                 s >> y;
                 s >> z;
-                w = 1.0f;
                 line = ".float " + std::to_string(x) + ", " +
                        std::to_string(y) + ", " + std::to_string(z);
                 dsm_mem.push_back(line);
@@ -227,14 +224,14 @@ int main(int argc, char *argv[]) {
         dsm_mem.push_back("unpack[r] V4_32, ,*; Vertex affiliation header");
         // printf("%lu", bones.size());
         vertex_affiliation = dsm_mem.size() - 1;
-        for (int i = 0; i < ceil(float(bones.size()) / 4); i++) {
+        for (unsigned int i = 0; i < ceil(float(bones.size()) / 4); i++) {
             line = ".int " + std::to_string(bones[(i * 4)]);
-            int z = 1;
+            unsigned int z = 1;
             while ((i * 4) + z < bones.size() && z < 4) {
                 line += ", " + std::to_string(bones[(i * 4) + z]);
                 z++;
             }
-            for (z; z < 4; z++) {
+            for (; z < 4; z++) {
                 line += ", 0";
             }
             dsm_mem.push_back(line);
@@ -275,7 +272,7 @@ int main(int argc, char *argv[]) {
            " ,*; Vertex affiliation header";
     dsm_mem[vertex_affiliation] = line;
 
-    for (int i = 0; i < dsm_mem.size(); i++) {
+    for (unsigned int i = 0; i < dsm_mem.size(); i++) {
         dsm << dsm_mem[i] << std::endl;
     }
     dsm.close();
