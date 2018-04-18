@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
         dsm_mem.push_back(
             "stcycl 01, 01; We write code to memory without skips/overwrite");
         dsm_mem.push_back("");
-        dsm_mem.push_back("unpack[mr] S_8, 4, *; Vertex indices");
+        dsm_mem.push_back("unpack[mru] S_8, 4, *; Vertex indices");
 
         while (getline(input, line)) {
             if (line.substr(0, 2) == "f ") {
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]) {
         dsm_mem.push_back(
             "stcycl 01, 01; We write code to memory without skips/overwrite");
         dsm_mem.push_back("");
-        dsm_mem.push_back("unpack[mr] S_8, 4, *; Flags");
+        dsm_mem.push_back("unpack[mru] S_8, 4, *; Flags");
 
         for (int i = 0; i < face_count; i++) {
             dsm_mem.push_back(".byte 0x10; stock");
