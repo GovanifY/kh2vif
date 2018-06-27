@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
     int vertices_arg = 0;
     int vertex_affiliation = 0;
 
-    int junk = 1;
+    int junk = 0;
     int map = 0;
     char *objname = argv[1];
     printf("kh2vif\n-- If you don't know what a VIF packet be prepared to be "
@@ -256,6 +256,11 @@ int main(int argc, char *argv[]) {
                 dsm_mem.push_back(line);
             }
             dsm_mem.push_back(".EndUnpack");
+        } else {
+            // For some reason this is only specified in maps, should look at
+            // how necessary this truly is later
+            dsm_mem.push_back(
+                "mscnt; We tell the game the microcode continues");
         }
         dsm_mem.push_back("vifnop");
         dsm_mem.push_back("vifnop; We wait for data to be kicked in");
@@ -269,20 +274,36 @@ int main(int argc, char *argv[]) {
     // h3: 1 not because 1 value but 1 array of 4, padding needs to be
     // checked!
 
-    line = ".int " + std::to_string(face_count * 3) + ", 4, " +
-           std::to_string(4 + (face_count * 3) + vertex_count) + ", " +
-           std::to_string(int(4 + (face_count * 3) + vertex_count +
-                              ceil(float(bones.size()) / 4))) +
-           "; Number of u+v+flag+index, their offset, offset of vertex "
-           "affiliation header, offset of mat definition(end)";
+    if (!map) {
+        line = ".int " + std::to_string(face_count * 3) + ", 4, " +
+               std::to_string(4 + (face_count * 3) + vertex_count) + ", " +
+               std::to_string(int(4 + (face_count * 3) + vertex_count +
+                                  ceil(float(bones.size()) / 4))) +
+               "; Number of u+v+flag+index, their offset, offset of vertex "
+               "affiliation header, offset of mat definition(end)";
+    } else {
+        line = ".int " + std::to_string(face_count * 3) +
+               ", 4, 0, 0; Number of u+v+flag+index, their offset, offset of "
+               "vertex "
+               "affiliation header, offset of mat definition(end)";
+    }
     dsm_mem[tmpheader] = line;
     dsm_mem[tmpheader + 1] =
         ".int 0, 0, 0, 0; Nobody care about vertices merging and colors";
-    line = ".int " + std::to_string(vertex_count) + ", " +
-           std::to_string(4 + (face_count * 3)) + ", 0, " +
-           std::to_string(bones.size()) +
-           "; Number of vertices, their offset, reserved and number of array "
-           "attribution";
+    if (!map) {
+        line =
+            ".int " + std::to_string(vertex_count) + ", " +
+            std::to_string(4 + (face_count * 3)) + ", 0, " +
+            std::to_string(bones.size()) +
+            "; Number of vertices, their offset, reserved and number of array "
+            "attribution";
+    } else {
+        line = ".int " + std::to_string(vertex_count) + ", " +
+               std::to_string(4 + (face_count * 3)) +
+               ", 0, 0; Number of vertices, their offset, reserved and number "
+               "of array "
+               "attribution";
+    }
     dsm_mem[tmpheader + 2] = line;
     line = "unpack[mr] V3_32, " + std::to_string(4 + (face_count * 3)) +
            ", *; Vertex definition";
