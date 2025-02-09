@@ -324,8 +324,9 @@ int main(int argc, char *argv[]) {
         printf("Could not proceed, please install the homebrew ps2 sdk!\n");
         return -1;
     }
-    if (system(("dvp-objcopy -O binary junk.o \"" + kh2vname + "\"").c_str()) !=
-        0) {
+    if (system(("dvp-objcopy -I elf32-littlemips -O binary junk.o \"" +
+                kh2vname + "\"")
+                   .c_str()) != 0) {
         printf("Your homebrew ps2 sdk installation seems to be broken, please "
                "reinstall\n");
         return -1;
